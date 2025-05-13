@@ -142,6 +142,40 @@ impl Write for Stdout {
 
 impl Write for StdoutLock<'_> {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        let s = buf;
+        let pat = "[WithColor]: ".as_bytes();
+        // Check if the string contains the pattern
+        // If it does, write the string to the console
+        let mut found = false;
+        for i in 0..s.len() {
+            let mut j = 0;
+            while j < pat.len() && i + j < s.len() && s[i + j] == pat[j] {
+                j += 1;
+            }
+            if j == pat.len() {
+                found = true;
+                break;
+            }
+        }
+        if found {
+            let head = "\x1b[31m".as_bytes();
+            let tail = "\x1b[0m".as_bytes();
+            let mut arr = [0u8; 1024];
+            let total_len = head.len() + s.len() + tail.len();
+            if total_len > arr.len() {
+                // fallback to normal write if too long
+                return self.inner.write(buf);
+            }
+            arr[..head.len()].copy_from_slice(head);
+            arr[head.len()..head.len() + s.len()].copy_from_slice(s);
+            arr[head.len() + s.len()..total_len].copy_from_slice(tail);
+            if self.inner.write(&arr[..total_len]).is_ok() {
+                return Ok(s.len());
+            }
+            else {
+                return Err(io::Error::Io);
+            }
+        }
         self.inner.write(buf)
     }
     fn flush(&mut self) -> io::Result<()> {
