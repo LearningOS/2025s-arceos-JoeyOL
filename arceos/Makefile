@@ -185,6 +185,11 @@ debug: build
 	  -ex 'continue' \
 	  -ex 'disp /16i $$pc'
 
+debug-vscode: build
+	@echo "Starting QEMU in debug mode for VS Code. GDB server on localhost:1234"
+	@echo "ELF file: $(OUT_ELF)"
+	$(call run_qemu_debug)
+
 clippy:
 ifeq ($(origin ARCH), command line)
 	$(call cargo_clippy,--target $(TARGET))
@@ -235,4 +240,4 @@ clean_c::
 	rm -rf ulib/axlibc/build_*
 	rm -rf $(app-objs)
 
-.PHONY: all build disasm run justrun debug clippy fmt fmt_c test test_no_fail_fast clean clean_c doc disk_img pflash_img payload
+.PHONY: all build disasm run justrun debug debug-vscode clippy fmt fmt_c test test_no_fail_fast clean clean_c doc disk_img pflash_img payload
