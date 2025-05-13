@@ -57,7 +57,6 @@ extern crate alloc;
 #[doc(no_inline)]
 pub use alloc::{boxed, format, string, vec};
 #[cfg(feature = "alloc")]
-#[doc(no_inline)]
 pub mod collections;
 
 #[doc(no_inline)]
