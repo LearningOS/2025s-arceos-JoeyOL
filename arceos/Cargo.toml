@@ -2,6 +2,7 @@
 resolver = "2"
 
 members = [
+    "axfs_ramfs",
     "modules/axalloc",
     "modules/alt_axalloc",
     "modules/axconfig",
