@@ -45,9 +45,9 @@ jobs:
           cargo install cargo-binutils
 
           mkdir -p /opt/musl 
-          cp aarch64-linux-musl-cross /opt/musl
-          cp riscv64-linux-musl-cross /opt/musl
-          cp x86_64-linux-musl-cross /opt/musl
+          cp -r aarch64-linux-musl-cross /opt/musl
+          cp -r riscv64-linux-musl-cross /opt/musl
+          cp -r x86_64-linux-musl-cross /opt/musl
           cd /opt/musl 
 
           qemu-system-riscv64 --version
