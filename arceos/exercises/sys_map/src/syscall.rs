@@ -1,13 +1,17 @@
 #![allow(dead_code)]
 
 use core::ffi::{c_void, c_char, c_int};
+use std::string::String;
+use std::vec;
 use axhal::arch::TrapFrame;
 use axhal::trap::{register_trap_handler, SYSCALL};
+use axhal::mem::phys_to_virt;
 use axerrno::LinuxError;
 use axtask::current;
 use axtask::TaskExtRef;
 use axhal::paging::MappingFlags;
 use arceos_posix_api as api;
+use memory_addr::{align_up_4k, VirtAddrRange};
 
 const SYS_IOCTL: usize = 29;
 const SYS_OPENAT: usize = 56;
@@ -140,7 +144,36 @@ fn sys_mmap(
     fd: i32,
     _offset: isize,
 ) -> isize {
-    unimplemented!("no sys_mmap!");
+    let current = &axtask::current();
+    let mut uspace = current.task_ext().aspace.lock();
+    let limit = VirtAddrRange{start: uspace.base(), end: uspace.end()};
+    // 找到空闲地址空间
+    let mmap_st = uspace.find_free_area(uspace.base(), align_up_4k(length), limit).unwrap();
+    uspace.map_alloc(mmap_st, align_up_4k(length), MappingFlags::from(MmapProt::from_bits(prot).unwrap()), true).unwrap();
+
+    let (paddr, _, _) = uspace
+    .page_table()
+    .query(mmap_st.into())
+    .unwrap_or_else(|_| panic!("Mapping failed for segment: {:#x}", mmap_st));
+
+    api::sys_lseek(fd, _offset as i64, 0) as i32;
+    let mut buf = vec![0; length];
+    api::sys_read(fd, buf.as_mut_ptr() as *mut c_void, length);
+
+    // debug
+    // ax_println!("context {:#?}", String::from_utf8(buf.clone()));
+
+    unsafe {
+        core::ptr::copy_nonoverlapping(
+            buf.as_ptr(),
+            // 内核态下的虚拟地址
+            phys_to_virt(paddr).as_mut_ptr(),
+            length,
+        );
+    }
+
+    // 返回用户态对应的虚拟地址
+    return mmap_st.as_usize() as isize;
 }
 
 fn sys_openat(dfd: c_int, fname: *const c_char, flags: c_int, mode: api::ctypes::mode_t) -> isize {
