@@ -44,13 +44,11 @@ jobs:
           source "$HOME/.cargo/env"
           cargo install cargo-binutils
 
-          mkdir -p /opt/musl && cd /opt/musl
-          wget https://musl.cc/aarch64-linux-musl-cross.tgz
-          wget https://musl.cc/riscv64-linux-musl-cross.tgz
-          wget https://musl.cc/x86_64-linux-musl-cross.tgz
-          tar zxf aarch64-linux-musl-cross.tgz
-          tar zxf riscv64-linux-musl-cross.tgz
-          tar zxf x86_64-linux-musl-cross.tgz
+          mkdir -p /opt/musl 
+          cp aarch64-linux-musl-cross /opt/musl
+          cp riscv64-linux-musl-cross /opt/musl
+          cp x86_64-linux-musl-cross /opt/musl
+          cd /opt/musl 
 
           qemu-system-riscv64 --version
 
